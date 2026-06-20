@@ -1,0 +1,38 @@
+name: Publish Extension
+
+# Este script se activa automáticamente cuando publicas una "Release" en GitHub
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      # Instalar los publicadores de Microsoft y Open VSX
+      - name: Install vsce & ovsx globally
+        run: npm install -g @vscode/vsce ovsx
+
+      # Empaquetar la extensión (.vsix)
+      - name: Package Extension
+        run: vsce package --yarn
+
+      # Publicar en Microsoft (VS Code) usando tu VSCE_PAT
+      - name: Publish to Visual Studio Marketplace
+        run: vsce publish -p ${{ secrets.VSCE_PAT }}
+
+      # Publicar en Open VSX usando tu OVSX_PAT
+      - name: Publish to Open VSX
+        run: ovsx publish -p ${{ secrets.OVSX_PAT }}

@@ -1,14 +1,33 @@
 {
   "name": "operiasystems-autocommit-gitgenius-vscode-plugin",
   "displayName": "AutoCommit GitGenius VSCode Plugin",
-  "description": "AI-powered auto commits",
-  "version": "0.0.1",
+  "description": "AI-powered auto commits directly from your workspace",
+  "version": "1.0.0",
+  "publisher": "operiasystems",
   "engines": {
     "vscode": "^1.125.0"
   },
   "categories": [
-    "Other"
+    "SCM Providers",
+    "Machine Learning"
   ],
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "llm",
+    "automation"
+  ],
+  "icon": "webview/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Phosky71/AutoCommit-GitGenius-VSCodePlugin.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Phosky71/AutoCommit-GitGenius-VSCodePlugin.git/issues"
+  },
+  "homepage": "https://github.com/Phosky71/AutoCommit-GitGenius-VSCodePlugin.git",
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
