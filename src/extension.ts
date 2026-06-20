@@ -1,9 +1,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { ConfigManager } from './config'; // <-- 1. IMPORTAMOS TU NUEVO GESTOR
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('AutoCommit GitGenius is now active!');
+
+	// 2. INSTANCIAMOS EL GESTOR PASÁNDOLE EL CONTEXTO DE VS CODE
+	const configManager = new ConfigManager(context);
 
 	let disposable = vscode.commands.registerCommand('autocommit.start', () => {
 		// 1. Crear el panel del Webview
@@ -42,24 +46,40 @@ export function activate(context: vscode.ExtensionContext) {
 				try {
 					let payload: any = null;
 
-					// Aquí mapearemos la lógica de Rust a TypeScript
+					// 3. REEMPLAZAMOS LOS MOCKS POR LAS LLAMADAS REALES A LA BASE DE DATOS
 					switch (command) {
 						case 'load_config_from_file':
 						case 'get_config':
-							// Datos mockeados para que la UI cargue sin crashear
-							payload = {
-								theme: 'dark',
-								provider: 'lmstudio',
-								repos: [],
-								commit_history: []
-							};
+							payload = await configManager.getConfig();
 							break;
+
+						case 'save_config':
+							await configManager.saveConfig(args.config);
+							payload = { success: true };
+							break;
+
+						case 'get_provider_defaults':
+							payload = configManager.getProviderDefaults(args.provider);
+							break;
+
 						case 'get_repos':
-							payload = [];
+							const cfgRepos = await configManager.getConfig();
+							payload = cfgRepos.repos || [];
 							break;
+
 						case 'get_commit_history':
-							payload = [];
+							const cfgHistory = await configManager.getConfig();
+							payload = cfgHistory.commit_history || [];
 							break;
+
+						// Placeholders para evitar warnings en consola mientras hacemos el módulo Git
+						case 'validate_repo_path':
+						case 'get_current_branch':
+						case 'list_remote_branches':
+						case 'get_diff_preview':
+							payload = null;
+							break;
+
 						default:
 							console.warn(`Comando no implementado aún: ${command}`);
 					}

@@ -44,8 +44,11 @@ exports.deactivate = deactivate;
 const vscode = __importStar(__webpack_require__(1));
 const path = __importStar(__webpack_require__(2));
 const fs = __importStar(__webpack_require__(3));
+const config_1 = __webpack_require__(4); // <-- 1. IMPORTAMOS TU NUEVO GESTOR
 function activate(context) {
     console.log('AutoCommit GitGenius is now active!');
+    // 2. INSTANCIAMOS EL GESTOR PASÁNDOLE EL CONTEXTO DE VS CODE
+    const configManager = new config_1.ConfigManager(context);
     let disposable = vscode.commands.registerCommand('autocommit.start', () => {
         // 1. Crear el panel del Webview
         const panel = vscode.window.createWebviewPanel('autoCommit', 'AutoCommit', vscode.ViewColumn.One, {
@@ -69,23 +72,33 @@ function activate(context) {
             const { command, id, ...args } = message;
             try {
                 let payload = null;
-                // Aquí mapearemos la lógica de Rust a TypeScript
+                // 3. REEMPLAZAMOS LOS MOCKS POR LAS LLAMADAS REALES A LA BASE DE DATOS
                 switch (command) {
                     case 'load_config_from_file':
                     case 'get_config':
-                        // Datos mockeados para que la UI cargue sin crashear
-                        payload = {
-                            theme: 'dark',
-                            provider: 'lmstudio',
-                            repos: [],
-                            commit_history: []
-                        };
+                        payload = await configManager.getConfig();
+                        break;
+                    case 'save_config':
+                        await configManager.saveConfig(args.config);
+                        payload = { success: true };
+                        break;
+                    case 'get_provider_defaults':
+                        payload = configManager.getProviderDefaults(args.provider);
                         break;
                     case 'get_repos':
-                        payload = [];
+                        const cfgRepos = await configManager.getConfig();
+                        payload = cfgRepos.repos || [];
                         break;
                     case 'get_commit_history':
-                        payload = [];
+                        const cfgHistory = await configManager.getConfig();
+                        payload = cfgHistory.commit_history || [];
+                        break;
+                    // Placeholders para evitar warnings en consola mientras hacemos el módulo Git
+                    case 'validate_repo_path':
+                    case 'get_current_branch':
+                    case 'list_remote_branches':
+                    case 'get_diff_preview':
+                        payload = null;
                         break;
                     default:
                         console.warn(`Comando no implementado aún: ${command}`);
@@ -120,6 +133,82 @@ module.exports = require("path");
 /***/ ((module) => {
 
 module.exports = require("fs");
+
+/***/ }),
+/* 4 */
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ConfigManager = void 0;
+// Valores por defecto idénticos a los de tu config.rs
+const DEFAULT_CONFIG = {
+    theme: 'dark',
+    provider: 'lmstudio',
+    llm_base_url: 'http://localhost:1234/v1',
+    llm_model_name: 'local-model',
+    smart_mode: 'smart',
+    smart_threshold_lines: 10,
+    push_enabled: true,
+    push_remote: 'origin',
+    push_branch: 'main',
+    commit_prefix: '',
+    cooldown_minutes: 5,
+    human_in_the_loop: true,
+    last_successful_commit: 0,
+    repos: [],
+    commit_history: []
+};
+class ConfigManager {
+    context;
+    constructor(context) {
+        this.context = context;
+    }
+    // Equivalente a load_config_from_file / get_config
+    async getConfig() {
+        // Leemos la configuración plana
+        const config = this.context.globalState.get('autocommit_config', DEFAULT_CONFIG);
+        // Recuperamos los secretos desencriptados
+        const apiKey = await this.context.secrets.get('llm_api_key');
+        const gitToken = await this.context.secrets.get('git_token');
+        return {
+            ...config,
+            llm_api_key: apiKey || '',
+            git_token: gitToken || ''
+        };
+    }
+    // Equivalente a save_config
+    async saveConfig(newConfig) {
+        // Destructuramos para separar las contraseñas del resto de la configuración
+        const { llm_api_key, git_token, ...safeConfig } = newConfig;
+        // Guardamos la configuración normal en texto plano
+        await this.context.globalState.update('autocommit_config', safeConfig);
+        // Guardamos las contraseñas en el almacén seguro del sistema
+        if (llm_api_key !== undefined) {
+            await this.context.secrets.store('llm_api_key', llm_api_key);
+        }
+        if (git_token !== undefined) {
+            await this.context.secrets.store('git_token', git_token);
+        }
+    }
+    // Equivalente a tu LlmProvider.default_base_url() y default_model()
+    getProviderDefaults(provider) {
+        const defaults = {
+            'lmstudio': ['http://localhost:1234/v1', 'local-model'],
+            'ollama': ['http://localhost:11434/v1', 'llama3.2'],
+            'openai': ['https://api.openai.com/v1', 'gpt-4o-mini'],
+            'anthropic': ['https://api.anthropic.com/v1', 'claude-3-5-haiku-20241022'],
+            'gemini': ['https://generativelanguage.googleapis.com/v1beta/openai', 'gemini-2.0-flash'],
+            'openrouter': ['https://openrouter.ai/api/v1', 'openai/gpt-4o-mini'],
+            'groq': ['https://api.groq.com/openai/v1', 'llama-3.3-70b-versatile'],
+            'mistral': ['https://api.mistral.ai/v1', 'mistral-small-latest'],
+            'custom': ['http://localhost:8000/v1', 'local-model']
+        };
+        return defaults[provider.toLowerCase()] || defaults['lmstudio'];
+    }
+}
+exports.ConfigManager = ConfigManager;
+
 
 /***/ })
 /******/ 	]);
