@@ -231,8 +231,10 @@ module.exports = require("fs");
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ConfigManager = void 0;
-// Valores por defecto idénticos a los de tu config.rs
 const DEFAULT_CONFIG = {
+    interval_minutes: 30,
+    auto_commit_enabled: false,
+    auto_start: false,
     theme: 'dark',
     provider: 'lmstudio',
     llm_base_url: 'http://localhost:1234/v1',
@@ -388,18 +390,56 @@ async function callLlm(provider, baseUrl, model, apiKey, userContent) {
 
 /***/ }),
 /* 6 */
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.runGit = runGit;
 exports.analyzeDiff = analyzeDiff;
+exports.validateRepoPath = validateRepoPath;
+exports.getCurrentBranch = getCurrentBranch;
+exports.listRemoteBranches = listRemoteBranches;
 exports.generateFallbackMessage = generateFallbackMessage;
 exports.llmCommitMessage = llmCommitMessage;
 exports.runCommitInternal = runCommitInternal;
 const child_process_1 = __webpack_require__(7);
 const util_1 = __webpack_require__(8);
 const llm_1 = __webpack_require__(5);
+const path = __importStar(__webpack_require__(11));
+const fs = __importStar(__webpack_require__(12));
 const execAsync = (0, util_1.promisify)(child_process_1.execFile);
 // Ejecutor seguro de Git
 async function runGit(cwd, args) {
@@ -435,6 +475,37 @@ function analyzeDiff(diff, thresholdLines) {
         is_too_large: files_changed > 40 || total > 3000,
         estimated_tokens: Math.floor(diff.length / 4) + promptOverheadTokens
     };
+}
+async function validateRepoPath(repoPath) {
+    try {
+        const gitDir = path.join(repoPath, '.git');
+        const stat = await fs.promises.stat(gitDir);
+        return stat.isDirectory() || stat.isFile(); // Puede ser un archivo si es un submódulo
+    }
+    catch {
+        return false;
+    }
+}
+async function getCurrentBranch(repoPath) {
+    try {
+        const output = await runGit(repoPath, ['rev-parse', '--abbrev-ref', 'HEAD']);
+        return output.trim();
+    }
+    catch {
+        return '—';
+    }
+}
+async function listRemoteBranches(repoPath) {
+    try {
+        const output = await runGit(repoPath, ['branch', '-r']);
+        return output
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0 && !line.includes('HEAD'));
+    }
+    catch {
+        return [];
+    }
 }
 function generateFallbackMessage(stats) {
     if (stats.files_changed === 0)
@@ -859,6 +930,18 @@ function stopAutoCommit() {
     }
 }
 
+
+/***/ }),
+/* 11 */
+/***/ ((module) => {
+
+module.exports = require("node:path");
+
+/***/ }),
+/* 12 */
+/***/ ((module) => {
+
+module.exports = require("node:fs");
 
 /***/ })
 /******/ 	]);

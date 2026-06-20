@@ -1,6 +1,8 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { callLlm } from './llm';
+import * as path from "node:path";
+import * as fs from "node:fs";
 
 const execAsync = promisify(execFile);
 
@@ -54,6 +56,37 @@ export function analyzeDiff(diff: string, thresholdLines: number): DiffStats {
         is_too_large: files_changed > 40 || total > 3000,
         estimated_tokens: Math.floor(diff.length / 4) + promptOverheadTokens
     };
+}
+
+export async function validateRepoPath(repoPath: string): Promise<boolean> {
+    try {
+        const gitDir = path.join(repoPath, '.git');
+        const stat = await fs.promises.stat(gitDir);
+        return stat.isDirectory() || stat.isFile(); // Puede ser un archivo si es un submódulo
+    } catch {
+        return false;
+    }
+}
+
+export async function getCurrentBranch(repoPath: string): Promise<string> {
+    try {
+        const output = await runGit(repoPath, ['rev-parse', '--abbrev-ref', 'HEAD']);
+        return output.trim();
+    } catch {
+        return '—';
+    }
+}
+
+export async function listRemoteBranches(repoPath: string): Promise<string[]> {
+    try {
+        const output = await runGit(repoPath, ['branch', '-r']);
+        return output
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0 && !line.includes('HEAD'));
+    } catch {
+        return [];
+    }
 }
 
 export function generateFallbackMessage(stats: DiffStats): string {

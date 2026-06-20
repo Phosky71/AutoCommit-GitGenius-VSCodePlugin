@@ -26,6 +26,9 @@ export interface CommitHistoryEntry {
 }
 
 export interface AppConfig {
+    interval_minutes: number;
+    auto_commit_enabled: boolean;
+    auto_start: boolean;
     theme: string;
     provider: string;
     llm_base_url: string;
@@ -41,13 +44,14 @@ export interface AppConfig {
     last_successful_commit: number;
     repos: RepoEntry[];
     commit_history: CommitHistoryEntry[];
-    // Estos campos los encriptaremos, pero los definimos aquí para el frontend
     llm_api_key?: string;
     git_token?: string;
 }
 
-// Valores por defecto idénticos a los de tu config.rs
 const DEFAULT_CONFIG: AppConfig = {
+    interval_minutes: 30,
+    auto_commit_enabled: false,
+    auto_start: false,
     theme: 'dark',
     provider: 'lmstudio',
     llm_base_url: 'http://localhost:1234/v1',
