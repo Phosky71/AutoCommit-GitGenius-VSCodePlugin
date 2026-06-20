@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "operiasystems-autocommit-gitgenius-vscode-plugin.helloWorld",
-        "title": "Hello World"
+        "command": "autocommit.start",
+        "title": "AutoCommit: Open Dashboard"
       }
     ]
   },

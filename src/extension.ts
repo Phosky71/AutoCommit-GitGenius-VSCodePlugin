@@ -1,26 +1,82 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	console.log('AutoCommit GitGenius is now active!');
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "operiasystems-autocommit-gitgenius-vscode-plugin" is now active!');
+	let disposable = vscode.commands.registerCommand('autocommit.start', () => {
+		// 1. Crear el panel del Webview
+		const panel = vscode.window.createWebviewPanel(
+			'autoCommit',
+			'AutoCommit',
+			vscode.ViewColumn.One,
+			{
+				enableScripts: true, // Permitir JavaScript
+				retainContextWhenHidden: true, // Evita que la app se recargue al cambiar de pestaña
+				localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'webview'))]
+			}
+		);
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('operiasystems-autocommit-gitgenius-vscode-plugin.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from AutoCommit GitGenius VSCode Plugin!');
+		// 2. Obtener rutas seguras para los archivos estáticos
+		const stylePath = vscode.Uri.file(path.join(context.extensionPath, 'webview', 'style.css'));
+		const mainJsPath = vscode.Uri.file(path.join(context.extensionPath, 'webview', 'js', 'main.js'));
+
+		const styleUri = panel.webview.asWebviewUri(stylePath);
+		const mainJsUri = panel.webview.asWebviewUri(mainJsPath);
+
+		// 3. Leer e inyectar el HTML
+		const htmlPath = path.join(context.extensionPath, 'webview', 'index.html');
+		let htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+		htmlContent = htmlContent.replace('{{styleUri}}', styleUri.toString());
+		htmlContent = htmlContent.replace('{{mainJsUri}}', mainJsUri.toString());
+
+		panel.webview.html = htmlContent;
+
+		// 4. Escuchar los mensajes (tus invoke de api.js)
+		panel.webview.onDidReceiveMessage(
+			async (message) => {
+				const { command, id, ...args } = message;
+
+				try {
+					let payload: any = null;
+
+					// Aquí mapearemos la lógica de Rust a TypeScript
+					switch (command) {
+						case 'load_config_from_file':
+						case 'get_config':
+							// Datos mockeados para que la UI cargue sin crashear
+							payload = {
+								theme: 'dark',
+								provider: 'lmstudio',
+								repos: [],
+								commit_history: []
+							};
+							break;
+						case 'get_repos':
+							payload = [];
+							break;
+						case 'get_commit_history':
+							payload = [];
+							break;
+						default:
+							console.warn(`Comando no implementado aún: ${command}`);
+					}
+
+					// Enviar la respuesta de vuelta al frontend para resolver la Promesa
+					panel.webview.postMessage({ type: 'response', id, payload });
+
+				} catch (error: any) {
+					vscode.window.showErrorMessage(`AutoCommit Error: ${error.message}`);
+				}
+			},
+			undefined,
+			context.subscriptions
+		);
 	});
 
 	context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}
