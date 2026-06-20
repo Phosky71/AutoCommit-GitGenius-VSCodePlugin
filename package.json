@@ -2,7 +2,7 @@
   "name": "operiasystems-autocommit-gitgenius-vscode-plugin",
   "displayName": "AutoCommit GitGenius VSCode Plugin",
   "description": "AI-powered auto commits directly from your workspace",
-  "version": "1.0.0",
+  "version": "1.0.0RC1",
   "publisher": "operiasystems",
   "engines": {
     "vscode": "^1.125.0"
