@@ -1,6 +1,6 @@
 name: Publish Extension
 
-# Ahora se activará automáticamente cuando subas un "Tag" a GitHub (ej. v0.0.1)
+# Se activará automáticamente cuando subas un "Tag" a GitHub (ej. v0.0.1)
 on:
   push:
     tags:
@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm' # Habilitada la caché para acelerar tus builds
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
@@ -32,23 +32,18 @@ jobs:
 
       # 1. Empaquetar la extensión y generar el archivo .vsix
       - name: Package Extension
-        # CORREGIDO: Se eliminó '--yarn' porque tu proyecto usa NPM
         run: vsce package
-
-      # 2. Publicar en Microsoft (VS Code Marketplace)
-      - name: Publish to Visual Studio Marketplace
-        run: vsce publish -p ${{ secrets.VSCE_PAT }}
-
-      # 3. Publicar en Open VSX (VSCodium, Gitpod)
+      
+      # 2. Publicar automáticamente en Open VSX (VSCodium, Gitpod)
       - name: Publish to Open VSX
         run: ovsx publish -p ${{ secrets.OVSX_PAT }}
 
-      # 4. ¡NUEVO! Crear el Draft/Release en GitHub y adjuntar el archivo .vsix
+      # 3. Crear el Draft/Release en GitHub y adjuntar el archivo .vsix
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: '*.vsix' # Coge el instalador que acabamos de generar y lo sube
-          draft: false # Si quieres que se guarde como borrador para revisarlo antes, pon 'true'
-          generate_release_notes: true # Genera automáticamente un resumen de tus commits
+          files: '*.vsix' # Sube el instalador a GitHub
+          draft: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
