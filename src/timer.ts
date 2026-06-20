@@ -41,13 +41,18 @@ export async function startAutoCommit(configManager: ConfigManager, panel: vscod
 
             if (!isEmpty) {
                 if (result.pending_approval) {
-                    // Si requiere aprobación, mostramos el modal
-                    panel.reveal();
+                    vscode.window.showInformationMessage(
+                        'AutoCommit: Tienes un commit generado por IA esperando tu aprobación.',
+                        'Revisar ahora'
+                    ).then(selection => {
+                        if (selection === 'Revisar ahora') {
+                            panel.reveal(); // Solo abrimos el panel si el usuario hace clic en el botón
+                        }
+                    });
 
-                    // Esto evita llamadas a la API en bucle mientras el usuario aprueba.
+                    // Actualizamos el tiempo igualmente para que no entre en bucle
                     repo.last_commit_time = now;
                     await configManager.saveConfig(config);
-
                 } else {
                     // Si es modo silencioso, guardamos el historial como siempre
                     config.commit_history.push({
