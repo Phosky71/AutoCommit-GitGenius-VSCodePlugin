@@ -176,6 +176,9 @@ function activate(context) {
                         (0, timer_1.stopAutoCommit)();
                         payload = true;
                         break;
+                    case 'init_git_repo':
+                        payload = await (0, commands_1.initGitRepoCmd)(configManager);
+                        break;
                     default:
                         console.warn(`Command not implemented: ${command}`);
                 }
@@ -630,6 +633,7 @@ exports.runCommitCmd = runCommitCmd;
 exports.confirmCommitCmd = confirmCommitCmd;
 exports.getDiffPreviewCmd = getDiffPreviewCmd;
 exports.exportHistoryCsv = exportHistoryCsv;
+exports.initGitRepoCmd = initGitRepoCmd;
 const vscode = __importStar(__webpack_require__(1));
 const path = __importStar(__webpack_require__(2));
 const fs = __importStar(__webpack_require__(3));
@@ -774,6 +778,18 @@ async function exportHistoryCsv(configManager) {
         csv += `${e.timestamp},${e.repo_path.replace(/,/g, ";")},"${e.message.replace(/"/g, '""').replace(/\n/g, " ")}",${e.used_llm},${e.files_changed},${e.insertions},${e.deletions},${e.estimated_tokens}\n`;
     }
     return csv;
+}
+// Añade esta función al final de commands.ts
+async function initGitRepoCmd(configManager) {
+    const folders = vscode.workspace.workspaceFolders;
+    if (!folders || folders.length === 0) {
+        throw new Error("No folder opened in VS Code. Please open a folder first.");
+    }
+    const activeFolder = folders[0].uri.fsPath.replace(/\\/g, '/');
+    // Ejecutamos git init en la carpeta
+    await (0, git_1.runGit)(activeFolder, ['init']);
+    // Devolvemos el repositorio auto-detectado (esto lo registrará en nuestro config)
+    return await getWorkspaceRepo(configManager);
 }
 
 

@@ -6,7 +6,14 @@ import * as fs from 'fs';
 import { ConfigManager, AppConfig } from './config';
 import { callLlm } from './llm';
 import { validateRepoPath, getCurrentBranch, listRemoteBranches, runCommitInternal } from './git';
-import { getWorkspaceRepo, runCommitCmd, confirmCommitCmd, getDiffPreviewCmd, exportHistoryCsv } from './commands';
+import {
+	getWorkspaceRepo,
+	runCommitCmd,
+	confirmCommitCmd,
+	getDiffPreviewCmd,
+	exportHistoryCsv,
+	initGitRepoCmd
+} from './commands';
 import { startAutoCommit, stopAutoCommit } from './timer';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -159,6 +166,9 @@ export function activate(context: vscode.ExtensionContext) {
 							payload = true;
 							break;
 
+						case 'init_git_repo':
+							payload = await initGitRepoCmd(configManager);
+							break;
 						default:
 							console.warn(`Command not implemented: ${command}`);
 					}

@@ -63,3 +63,4 @@ export const getCommitHistory = () => invoke('get_commit_history');
 export const clearCommitHistory = () => invoke('clear_commit_history');
 export const exportHistoryCsv = () => invoke('export_history_csv');
 export const startAutoCommit = () => invoke('start_auto_commit');
+export const initGitRepo = () => invoke('init_git_repo');

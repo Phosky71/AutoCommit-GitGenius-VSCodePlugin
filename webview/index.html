@@ -28,12 +28,12 @@
                     <path d="M3 9h18"/>
                     <path d="M9 21V9"/>
                 </svg>
-                Repositories
+                Workspace
             </button>
             <button class="nav-item" data-section="settings">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                 </svg>
                 Settings
             </button>
@@ -42,14 +42,14 @@
                     <polyline points="12 8 12 12 14 14"/>
                     <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
                 </svg>
-                Commit History
+                History
             </button>
         </nav>
     </aside>
 
     <div class="main-wrap">
         <header class="topbar">
-            <h1 id="topbar-title" class="topbar-title">Repositories</h1>
+            <h1 id="topbar-title" class="topbar-title">Workspace</h1>
             <div class="topbar-actions">
                 <button id="theme-btn" class="theme-toggle" aria-label="Toggle theme">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -65,31 +65,23 @@
             <section id="panel-repos" class="section-panel active">
                 <div class="section-header">
                     <div>
-                        <div class="section-title">Repositories</div>
-                        <div id="repos-count-sub" class="section-sub">No repositories configured</div>
+                        <div class="section-title">Current Workspace</div>
+                        <div id="repos-count-sub" class="section-sub">Auto-detected from VS Code</div>
                     </div>
-                    <button id="btn-add-repo" class="btn btn-primary">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="2.5">
-                            <line x1="12" y1="5" x2="12" y2="19"/>
-                            <line x1="5" y1="12" x2="19" y2="12"/>
-                        </svg>
-                        Add repository
-                    </button>
+                    <button id="btn-add-repo" style="display:none;"></button>
                 </div>
                 <div id="repos-grid" class="repos-grid">
                     <div id="repos-empty" class="empty-state">
                         <div class="empty-state-icon">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="1.5">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <path d="M3 3h18v18H3z"/>
                                 <path d="M3 9h18"/>
                                 <path d="M9 21V9"/>
                             </svg>
                         </div>
-                        <h3>No repositories yet</h3>
-                        <p>Add a Git repository to start automating commits with AI-generated messages.</p>
-                        <button id="btn-add-repo-empty" class="btn btn-primary">Add repository</button>
+                        <h3>No Git repository detected</h3>
+                        <p>The current workspace is not a Git repository. Initialize it to start automating commits.</p>
+                        <button id="btn-init-git" class="btn btn-primary">Initialize Git Repository</button>
                     </div>
                 </div>
             </section>
@@ -122,8 +114,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="cfg-base-url">Base URL</label>
-                                <input id="cfg-base-url" class="form-input" type="url"
-                                       placeholder="http://localhost:1234/v1">
+                                <input id="cfg-base-url" class="form-input" type="url" placeholder="http://localhost:1234/v1">
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="cfg-model">Model name</label>
@@ -132,12 +123,9 @@
                             <div class="form-group">
                                 <label class="form-label" for="cfg-api-key">API Key</label>
                                 <div class="input-with-btn">
-                                    <input id="cfg-api-key" class="form-input" type="password"
-                                           placeholder="Masked after save.">
-                                    <button id="btn-toggle-apikey" class="btn btn-secondary" type="button"
-                                            title="Show/hide key">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                             stroke="currentColor" stroke-width="2">
+                                    <input id="cfg-api-key" class="form-input" type="password" placeholder="Masked after save.">
+                                    <button id="btn-toggle-apikey" class="btn btn-secondary" type="button" title="Show/hide key">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                             <circle cx="12" cy="12" r="3"/>
                                         </svg>
@@ -156,19 +144,12 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">LLM usage</label>
-                                <div class="smart-mode-ctrl"
-                                     style="display:flex; gap: var(--space-2); flex-wrap:wrap; margin-top: var(--space-1);">
-                                    <button class="btn btn-secondary segment-btn" data-val="always" type="button">
-                                        Always
-                                    </button>
-                                    <button class="btn btn-secondary segment-btn active" data-val="smart" type="button">
-                                        Smart
-                                    </button>
-                                    <button class="btn btn-secondary segment-btn" data-val="never" type="button">Never
-                                    </button>
+                                <div class="smart-mode-ctrl" style="display:flex; gap: var(--space-2); flex-wrap:wrap; margin-top: var(--space-1);">
+                                    <button class="btn btn-secondary segment-btn" data-val="always" type="button">Always</button>
+                                    <button class="btn btn-secondary segment-btn active" data-val="smart" type="button">Smart</button>
+                                    <button class="btn btn-secondary segment-btn" data-val="never" type="button">Never</button>
                                 </div>
-                                <p id="smart-mode-hint" class="form-hint">LLM only when diff is significant
-                                    (recommended)</p>
+                                <p id="smart-mode-hint" class="form-hint">LLM only when diff is significant (recommended)</p>
                             </div>
                             <div class="form-group" id="threshold-group">
                                 <label class="form-label" for="cfg-threshold">Significance threshold (lines)</label>
@@ -182,8 +163,7 @@
                         <div class="card-header"><span class="settings-section-title">Commit Behaviour</span></div>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label class="form-label" for="cfg-prefix">Default commit prefix <span
-                                        style="font-weight:400;text-transform:none">(optional)</span></label>
+                                <label class="form-label" for="cfg-prefix">Default commit prefix <span style="font-weight:400;text-transform:none">(optional)</span></label>
                                 <input id="cfg-prefix" class="form-input" type="text" placeholder="e.g. auto:">
                                 <p class="form-hint">Each repository can override this in its own settings</p>
                             </div>
@@ -221,17 +201,17 @@
                         </div>
                     </div>
 
-                </div><div style="margin-top: var(--space-4);">
-                <button id="btn-save-settings" class="btn btn-primary">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="2">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                        <polyline points="17 21 17 13 7 13 7 21"/>
-                        <polyline points="7 3 7 8 15 8"/>
-                    </svg>
-                    Save settings
-                </button>
-            </div>
+                </div>
+                <div style="margin-top: var(--space-4);">
+                    <button id="btn-save-settings" class="btn btn-primary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        Save settings
+                    </button>
+                </div>
             </section>
 
             <section id="panel-history" class="section-panel">
@@ -277,8 +257,7 @@
                 <div id="history-list"></div>
                 <div id="history-empty" class="empty-state" style="display:none;">
                     <div class="empty-state-icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             stroke-width="1.5">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <polyline points="12 8 12 12 14 14"/>
                             <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/>
                         </svg>
@@ -289,10 +268,13 @@
             </section>
 
         </main>
-    </div></div><div id="modal-repo" class="modal-backdrop">
+    </div>
+</div>
+
+<div id="modal-repo" class="modal-backdrop">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-repo-title">
         <div class="modal-header">
-            <span id="modal-repo-title" class="modal-title">Add Repository</span>
+            <span id="modal-repo-title" class="modal-title">Repository Settings</span>
             <button id="btn-close-repo-modal" class="btn-icon" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"/>
@@ -303,11 +285,10 @@
         <div class="modal-body">
             <input type="hidden" id="repo-edit-id">
             <div class="form-group">
-                <label class="form-label" for="repo-path">Repository path</label>
+                <label class="form-label" for="repo-path">Workspace path</label>
                 <div class="path-picker">
-                    <input id="repo-path" class="form-input" type="text" placeholder="Click to browse" readonly
-                           style="cursor:pointer">
-                    <button class="btn btn-secondary" id="btn-browse-repo" type="button">Browse</button>
+                    <input id="repo-path" class="form-input" type="text" readonly style="background: var(--color-surface-offset); color: var(--color-text-muted); cursor: default;">
+                    <button class="btn btn-secondary" id="btn-browse-repo" type="button" style="display:none;"></button>
                 </div>
                 <span id="repo-path-hint" class="form-hint"></span>
             </div>
@@ -324,8 +305,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="form-label" for="repo-prefix">Commit prefix <span
-                        style="font-weight:400;text-transform:none">(optional)</span></label>
+                <label class="form-label" for="repo-prefix">Commit prefix <span style="font-weight:400;text-transform:none">(optional)</span></label>
                 <input id="repo-prefix" class="form-input" type="text" placeholder="e.g. auto:">
             </div>
             <div class="toggle-row">
@@ -357,10 +337,11 @@
             <button id="btn-cancel-repo-modal" class="btn btn-secondary" type="button">Cancel</button>
             <button id="btn-save-repo" class="btn btn-primary" type="button">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
                 </svg>
-                Add repository
+                Save changes
             </button>
         </div>
     </div>
@@ -461,5 +442,6 @@
 
 <div id="toast-container" aria-live="polite"></div>
 
-<script type="module" src="{{mainJsUri}}"></script></body>
+<script type="module" src="{{mainJsUri}}"></script>
+</body>
 </html>

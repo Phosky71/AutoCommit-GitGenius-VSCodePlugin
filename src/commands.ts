@@ -169,3 +169,19 @@ export async function exportHistoryCsv(configManager: ConfigManager): Promise<st
     }
     return csv;
 }
+
+// Añade esta función al final de commands.ts
+export async function initGitRepoCmd(configManager: ConfigManager): Promise<RepoEntry[]> {
+    const folders = vscode.workspace.workspaceFolders;
+    if (!folders || folders.length === 0) {
+        throw new Error("No folder opened in VS Code. Please open a folder first.");
+    }
+
+    const activeFolder = folders[0].uri.fsPath.replace(/\\/g, '/');
+
+    // Ejecutamos git init en la carpeta
+    await runGit(activeFolder, ['init']);
+
+    // Devolvemos el repositorio auto-detectado (esto lo registrará en nuestro config)
+    return await getWorkspaceRepo(configManager);
+}

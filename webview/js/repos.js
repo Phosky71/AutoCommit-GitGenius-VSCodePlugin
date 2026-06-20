@@ -22,35 +22,37 @@ function renderRepos() {
     if (!grid) return;
 
     let empty = document.getElementById('repos-empty');
-    if (!empty) {
-        empty = document.createElement('div');
-        empty.id = 'repos-empty';
-        empty.className = 'empty-state';
-        empty.innerHTML = `
-      <div class="empty-state-icon">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 21V9"/>
-        </svg>
-      </div>
-      <h3>No repositories yet</h3>
-      <p>Add a Git repository to start automating commits.</p>
-      <button id="btn-add-repo-empty" class="btn btn-primary">Add repository</button>
-    `;
-    }
 
-    if (empty.parentNode === grid) grid.removeChild(empty);
+    if (empty && empty.parentNode === grid) grid.removeChild(empty);
 
     if (!reposList.length) {
         grid.innerHTML = '';
         grid.appendChild(empty);
         empty.style.display = '';
-        if (sub) sub.textContent = 'No repositories configured';
-        document.getElementById('btn-add-repo-empty')?.addEventListener('click', () => openEditRepoModal(null));
+        if (sub) sub.textContent = 'Auto-detected from VS Code';
+
+        // Asignar el evento al nuevo botón de inicialización
+        const initBtn = document.getElementById('btn-init-git');
+        if (initBtn) {
+            initBtn.onclick = async () => {
+                initBtn.disabled = true;
+                initBtn.innerHTML = '<span class="spin"></span> Initializing...';
+                try {
+                    reposList = await api.initGitRepo();
+                    renderRepos();
+                    dom.toast('Git repository initialized', 'success');
+                } catch (e) {
+                    dom.toast(e, 'error');
+                    initBtn.disabled = false;
+                    initBtn.textContent = 'Initialize Git Repository';
+                }
+            };
+        }
         return;
     }
 
     empty.style.display = 'none';
-    if (sub) sub.textContent = `${reposList.length} repositor${reposList.length === 1 ? 'y' : 'ies'} configured`;
+    if (sub) sub.textContent = `1 repository active in workspace`;
 
     grid.innerHTML = reposList.map(repo => {
         const parts    = repo.path.replace(/\\/g, '/').split('/');
@@ -74,9 +76,7 @@ function renderRepos() {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" pointer-events="none"><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>
             </button>
             <div class="dropdown-menu" id="ddm-${repo.id}">
-              <div class="dropdown-item repo-edit-btn" data-id="${repo.id}">Edit</div>
-              <div class="dropdown-divider"></div>
-              <div class="dropdown-item danger repo-delete-btn" data-id="${repo.id}">Remove</div>
+              <div class="dropdown-item repo-edit-btn" data-id="${repo.id}">Settings</div>
             </div>
           </div>
         </div>
