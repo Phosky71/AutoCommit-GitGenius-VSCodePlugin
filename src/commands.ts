@@ -9,13 +9,13 @@ const nowUnix = () => Math.floor(Date.now() / 1000);
 // --- HELPER: DETECCIÓN AUTOMÁTICA DEL REPOSITORIO DE VS CODE ---
 export async function getWorkspaceRepo(configManager: ConfigManager): Promise<RepoEntry[]> {
     const folders = vscode.workspace.workspaceFolders;
-    if (!folders || folders.length === 0) return [];
+    if (!folders || folders.length === 0) {return [];}
 
     const activeFolder = folders[0].uri.fsPath.replace(/\\/g, '/');
     const gitDir = path.join(activeFolder, '.git');
 
     // Si no tiene .git, devolvemos array vacío
-    if (!fs.existsSync(gitDir)) return [];
+    if (!fs.existsSync(gitDir)) {return [];}
 
     const config = await configManager.getConfig();
     let repo = config.repos.find(r => r.path === activeFolder);
@@ -26,7 +26,7 @@ export async function getWorkspaceRepo(configManager: ConfigManager): Promise<Re
             id: crypto.randomUUID(),
             path: activeFolder,
             interval_minutes: config.interval_minutes || 30,
-            timer_enabled: false,
+            timer_enabled: true,
             enabled: true,
             push_enabled: config.push_enabled,
             push_remote: config.push_remote || 'origin',
@@ -96,12 +96,12 @@ export async function confirmCommitCmd(args: any, configManager: ConfigManager):
         await runGit(repoPath, ['diff', '--cached', '--quiet']);
         throw new Error("No staged changes to commit");
     } catch (e: any) {
-        if (e.message === "No staged changes to commit") throw e;
+        if (e.message === "No staged changes to commit") {throw e;}
     }
 
     await runGit(repoPath, ['commit', '-m', message]);
 
-    if (tag) await runGit(repoPath, ['tag', tag]);
+    if (tag) {await runGit(repoPath, ['tag', tag]);}
 
     let finalMessage = message;
 
@@ -152,11 +152,11 @@ export async function getDiffPreviewCmd(repoPath: string, configManager: ConfigM
 async function pushHistory(configManager: ConfigManager, entry: CommitHistoryEntry, repoPath: string) {
     const config = await configManager.getConfig();
     config.commit_history.push(entry);
-    if (config.commit_history.length > 1000) config.commit_history.splice(0, config.commit_history.length - 1000);
+    if (config.commit_history.length > 1000) {config.commit_history.splice(0, config.commit_history.length - 1000);}
 
     config.last_successful_commit = nowUnix();
     const repo = config.repos.find(r => r.path === repoPath);
-    if (repo) repo.last_commit_time = nowUnix();
+    if (repo) {repo.last_commit_time = nowUnix();}
 
     await configManager.saveConfig(config);
 }

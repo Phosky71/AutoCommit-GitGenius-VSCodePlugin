@@ -137,7 +137,7 @@ async function saveRepo() {
         id: editingRepoId || crypto.randomUUID(),
         path,
         interval_minutes: parseInt(document.getElementById('repo-interval').value) || 30,
-        timer_enabled: false,
+        timer_enabled: true,
         enabled: true,
         push_enabled: document.getElementById('repo-push-enabled').checked,
         push_remote: document.getElementById('repo-push-remote').value.trim() || 'origin',

@@ -9,13 +9,17 @@ export async function startAutoCommit(configManager: ConfigManager, panel: vscod
     if (timerHandle) throw new Error("Timer is already running");
 
     // Evaluamos cada minuto
+    // En backend: timer.ts
+
     timerHandle = setInterval(async () => {
         try {
             const repos = await getWorkspaceRepo(configManager);
             if (repos.length === 0) return; // No hay repo activo
 
             const repo = repos[0];
-            if (!repo.enabled || !repo.timer_enabled) return;
+
+            // FIX 1: Eliminar el chequeo de timer_enabled. Nos basamos solo en la UI.
+            if (!repo.enabled) return;
 
             const now = Math.floor(Date.now() / 1000);
             const elapsedMinutes = Math.floor((now - repo.last_commit_time) / 60);
@@ -36,11 +40,16 @@ export async function startAutoCommit(configManager: ConfigManager, panel: vscod
             const isEmpty = result.message === "No changes to commit" || result.message.startsWith("Cooldown");
 
             if (!isEmpty) {
-                // Si requiere aprobación manual, mostramos/enfocamos el panel
                 if (result.pending_approval) {
+                    // Si requiere aprobación, mostramos el modal
                     panel.reveal();
+
+                    // Esto evita llamadas a la API en bucle mientras el usuario aprueba.
+                    repo.last_commit_time = now;
+                    await configManager.saveConfig(config);
+
                 } else {
-                    // Si fue silencioso, actualizamos historial
+                    // Si es modo silencioso, guardamos el historial como siempre
                     config.commit_history.push({
                         timestamp: now,
                         repo_path: repo.path,
@@ -55,14 +64,14 @@ export async function startAutoCommit(configManager: ConfigManager, panel: vscod
                     await configManager.saveConfig(config);
                 }
 
-                // Disparamos el evento al frontend
+                // Disparamos el evento al frontend para abrir el modal o la notificación
                 panel.webview.postMessage({ type: 'event', eventName: 'commit-status', payload: result });
             }
 
         } catch (e: any) {
             panel.webview.postMessage({ type: 'event', eventName: 'commit-error', payload: e.message });
         }
-    }, 60000); // 60 segundos
+    }, 60000);
 }
 
 export function stopAutoCommit() {
