@@ -1,0 +1,52 @@
+name: Publish Extension
+
+# Ahora se activará automáticamente cuando subas un "Tag" a GitHub (ej. v0.0.1)
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Damos permiso al bot de GitHub para que pueda escribir en tu repositorio y crear la Release
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install vsce & ovsx globally
+        run: npm install -g @vscode/vsce ovsx
+
+      # 1. Empaquetar la extensión y generar el archivo .vsix
+      - name: Package Extension
+        run: vsce package --yarn
+
+      # 2. Publicar en Microsoft (VS Code Marketplace)
+      - name: Publish to Visual Studio Marketplace
+        run: vsce publish -p ${{ secrets.VSCE_PAT }}
+
+      # 3. Publicar en Open VSX (VSCodium, Gitpod)
+      - name: Publish to Open VSX
+        run: ovsx publish -p ${{ secrets.OVSX_PAT }}
+
+      # 4. Crear el Draft/Release en GitHub y adjuntar el archivo .vsix
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: '*.vsix' # Coge el instalador que acabamos de generar y lo sube
+          draft: false # Si quieres que se guarde como borrador para revisarlo antes, pon 'true'
+          generate_release_notes: true # Genera automáticamente un resumen de tus commits
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
