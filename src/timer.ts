@@ -4,29 +4,31 @@ import { runCommitInternal } from './git';
 import { getWorkspaceRepo } from './commands';
 
 let timerHandle: NodeJS.Timeout | null = null;
+let currentPanel: vscode.WebviewPanel | null = null;
 
-export async function startAutoCommit(configManager: ConfigManager, panel: vscode.WebviewPanel) {
-    if (timerHandle) throw new Error("Timer is already running");
+// Permite vincular la UI si está abierta, pero no bloquea el proceso si está cerrada
+export function setTimerPanel(panel: vscode.WebviewPanel | null) {
+    currentPanel = panel;
+}
 
-    // Evaluamos cada minuto
-    // En backend: timer.ts
+export async function startAutoCommit(configManager: ConfigManager) {
+    if (timerHandle) return; // Si ya está corriendo, no creamos otro
 
     timerHandle = setInterval(async () => {
         try {
             const repos = await getWorkspaceRepo(configManager);
-            if (repos.length === 0) return; // No hay repo activo
+            if (repos.length === 0) return;
 
             const repo = repos[0];
-
-            // FIX 1: Eliminar el chequeo de timer_enabled. Nos basamos solo en la UI.
             if (!repo.enabled) return;
 
             const now = Math.floor(Date.now() / 1000);
             const elapsedMinutes = Math.floor((now - repo.last_commit_time) / 60);
 
+            // Respetamos el intervalo
             if (elapsedMinutes < repo.interval_minutes) return;
 
-            const config = await configManager.getConfig();
+            let config = await configManager.getConfig();
 
             const result = await runCommitInternal(
                 repo.path,
@@ -39,6 +41,11 @@ export async function startAutoCommit(configManager: ConfigManager, panel: vscod
 
             const isEmpty = result.message === "No changes to commit" || result.message.startsWith("Cooldown");
 
+            // CRÍTICO: Volvemos a pedir la configuración para evitar sobrescribir datos
+            // si el usuario los cambió durante el tiempo que tardó el LLM en responder.
+            config = await configManager.getConfig();
+            const configRepo = config.repos.find(r => r.path === repo.path);
+
             if (!isEmpty) {
                 if (result.pending_approval) {
                     vscode.window.showInformationMessage(
@@ -46,15 +53,12 @@ export async function startAutoCommit(configManager: ConfigManager, panel: vscod
                         'Revisar ahora'
                     ).then(selection => {
                         if (selection === 'Revisar ahora') {
-                            panel.reveal(); // Solo abrimos el panel si el usuario hace clic en el botón
+                            if (currentPanel) currentPanel.reveal();
+                            // Si la UI está cerrada, forzamos abrirla con el comando
+                            else vscode.commands.executeCommand('autocommit.start');
                         }
                     });
-
-                    // Actualizamos el tiempo igualmente para que no entre en bucle
-                    repo.last_commit_time = now;
-                    await configManager.saveConfig(config);
                 } else {
-                    // Si es modo silencioso, guardamos el historial como siempre
                     config.commit_history.push({
                         timestamp: now,
                         repo_path: repo.path,
@@ -65,18 +69,27 @@ export async function startAutoCommit(configManager: ConfigManager, panel: vscod
                         deletions: result.diff_stats?.deletions || 0,
                         estimated_tokens: result.diff_stats?.estimated_tokens || 0
                     });
-                    repo.last_commit_time = now;
-                    await configManager.saveConfig(config);
                 }
 
-                // Disparamos el evento al frontend para abrir el modal o la notificación
-                panel.webview.postMessage({ type: 'event', eventName: 'commit-status', payload: result });
+                // Avisamos a la UI solo si existe y está abierta
+                if (currentPanel) {
+                    currentPanel.webview.postMessage({ type: 'event', eventName: 'commit-status', payload: result });
+                }
             }
 
+            // CRÍTICO: Se actualiza SIEMPRE la marca de tiempo (haya cambios o no)
+            // Esto evita que entre en un bucle infinito cada 60 segundos buscando commits fantasmas.
+            if (configRepo) {
+                configRepo.last_commit_time = now;
+            }
+            await configManager.saveConfig(config);
+
         } catch (e: any) {
-            panel.webview.postMessage({ type: 'event', eventName: 'commit-error', payload: e.message });
+            if (currentPanel) {
+                currentPanel.webview.postMessage({ type: 'event', eventName: 'commit-error', payload: e.message });
+            }
         }
-    }, 60000);
+    }, 60000); // Se evalúa cada 60s
 }
 
 export function stopAutoCommit() {
